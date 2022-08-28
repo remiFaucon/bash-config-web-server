@@ -104,6 +104,7 @@ server {
   server_name www.$name;
   return 301 http://$name\$request_uri;
 }" > "$rootFolder"/"$name".conf
+
       cmd "$(sudo nginx -t)"
       cmd "$(sudo service nginx restart)"
       exit 1
