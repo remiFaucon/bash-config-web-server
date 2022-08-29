@@ -6,10 +6,11 @@ rootFolder="conf.d"
 
 
 function setupServerCmd() {
-  sudo mkdir /home/prod/"$name"/www
-  sudo mkdir /home/prod/"$name"/logs
+  useradd -m -p "$(openssl passwd -crypt "$2")" "$1"
+  sudo mkdir /home/"$1"/prod
+  sudo mkdir /home/"$1"/prod/www
+  sudo mkdir /home/"$1"/prod/logs
   sudo service nginx restart
-  adduser "$1"
   sudo service proftpd restart
 }
 
@@ -20,7 +21,7 @@ function staticConf() {
     server_name $1;
 
     location / {
-        root /home/prod/$1/www;
+        root /home/$1/prod/www;
         index index.html index.htm;
         try_files \$uri \$uri/ \$uri.html =404;
     }
@@ -31,8 +32,8 @@ function staticConf() {
         log_not_found off;
     }
 
-    error_log /home/prod/$1/logs/error.log;
-    access_log /home/prod/$1/logs/acess.log;
+    error_log /home/$1/prod/logs/error.log;
+    access_log /home/$1/prod/logs/acess.log;
 
     error_page 404 500 501 /error.html;
 
@@ -66,8 +67,8 @@ server {
         log_not_found off;
     }
 
-    error_log /home/prod/$1/logs/error.log;
-    access_log /home/prod/$1/logs/acess.log;
+    error_log /home/$1/prod/logs/error.log;
+    access_log /home/$1/prod/logs/acess.log;
 
     error_page 404 500 501 /error.html;
 
@@ -105,8 +106,8 @@ server {
         log_not_found off;
     }
 
-    error_log /home/prod/$1/logs/error.log;
-    access_log /home/prod/$1/logs/acess.log;
+    error_log /home/$1/prod/logs/error.log;
+    access_log /home/$1/prod/logs/acess.log;
 
     error_page 404 500 501 /error.html;
 
@@ -177,6 +178,7 @@ while test $# -gt 0; do
       echo "-t, --type=TYPE           static|php|nodejs"
       echo "-p, --port=PORT           port of your app nodejs"
       echo "-ws, --web-socket         active web socket"
+      echo "-psw, --password          ftp password"
       exit
       ;;
 
@@ -197,6 +199,17 @@ while test $# -gt 0; do
         name=$1
       else
         echo "no name specified in -t"
+        exit 1
+      fi
+      shift
+      ;;
+
+    -psw|--password)
+      shift
+      if test $# -gt 0; then
+        password=$1
+      else
+        echo "no password specified in -psw"
         exit 1
       fi
       shift
@@ -231,13 +244,13 @@ while test $# -gt 0; do
   esac
 done
 
-if test -z "$type" -a -z "$name"; then
-  echo "-n name and -t type required"
+if test -z "$type" -o -z "$name" -o -z "$password"; then
+  echo "-n name and -t type and -psw password required"
   exit 1
 else
   if test "$type" = "static"; then
     staticConf "$name"
-    setupServerCmd "$name"
+    setupServerCmd "$name" "$password"
     exit 1
 
   elif test "$type" = "nodejs"; then
@@ -247,18 +260,18 @@ else
 
     elif test -z "$webSocket"; then
       nodejsVanillaConf "$name" "$port"
-      setupServerCmd "$name"
+      setupServerCmd "$name" "$password"
       exit 1
 
     else
       nodejsWSConf "$name" "$port"
-      setupServerCmd "$name"
+      setupServerCmd "$name" "$password"
       exit 1
     fi
 
     elif test "$type" = "php"; then
       phpVanillaConf "$name"
-      setupServerCmd "$name"
+      setupServerCmd "$name" "$password"
       exit 1
   fi
 fi
