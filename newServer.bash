@@ -3,6 +3,166 @@
 secure=false
 rootFolder="conf.d"
 
+
+
+function setupServerCmd() {
+  sudo mkdir /home/prod/"$name"/www
+  sudo mkdir /home/prod/"$name"/logs
+  sudo service nginx restart
+  adduser "$1"
+  sudo service proftpd restart
+}
+
+function staticConf() {
+  echo "server {
+
+    listen 80;
+    server_name $1;
+
+    location / {
+        root /home/prod/$1/www;
+        index index.html index.htm;
+        try_files \$uri \$uri/ \$uri.html =404;
+    }
+
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    error_log /home/prod/$1/logs/error.log;
+    access_log /home/prod/$1/logs/acess.log;
+
+    error_page 404 500 501 /error.html;
+
+}
+
+server {
+    listen 80;
+    server_name www.$1;
+    return 301 http://$1\$request_uri;
+}" > "$rootFolder"/"$1".conf
+}
+
+function nodejsVanillaConf() {
+  echo "upstream $1 {
+    server localhost:$2;
+}
+
+server {
+
+    listen 80;
+    listen [::]:80;
+    server_name $1;
+
+    location / {
+        proxy_pass http://$1;
+    }
+
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    error_log /home/prod/$1/logs/error.log;
+    access_log /home/prod/$1/logs/acess.log;
+
+    error_page 404 500 501 /error.html;
+
+}
+
+server {
+    listen 80;
+    server_name www.$1;
+    return 301 http://$1\$request_uri;
+}" > "$rootFolder"/"$1".conf
+
+}
+
+function nodejsWSConf() {
+  echo "upstream $1 {
+    server localhost:$2;
+}
+
+server {
+
+    listen 80;
+    listen [::]:80;
+    server_name $1;
+
+    location / {
+        proxy_pass http://$1;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection \"upgrade\";
+    }
+
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    error_log /home/prod/$1/logs/error.log;
+    access_log /home/prod/$1/logs/acess.log;
+
+    error_page 404 500 501 /error.html;
+
+}
+
+server {
+    listen 80;
+    server_name www.$1;
+    return 301 http://$1\$request_uri;
+}" > "$rootFolder"/"$1".conf
+
+}
+
+function phpVanillaConf() {
+echo "server {
+
+    listen 80;
+    server_name $name;
+
+    index index.php index.html index.htm;
+
+    location / {
+        root /home/prod/$name/www;
+        index index.html index.htm;
+        try_files \$uri \$uri/ \$uri.html =404;
+    }
+
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    location ~ \.php$ {
+        try_files \$uri =404;
+        fastcgi_pass unix:/var/run/php8-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    error_log /home/prod/$name/logs/error.log;
+    access_log /home/prod/$name/logs/acess.log;
+
+    error_page 404 500 501 /error.html;
+
+}
+
+server {
+    listen 80;
+    server_name www.$name;
+    return 301 http://$name\$request_uri;
+}" > "$rootFolder"/"$name".conf
+
+}
+
 while test $# -gt 0; do
   case "$1" in
     -h|--help)
@@ -17,7 +177,7 @@ while test $# -gt 0; do
       echo "-t, --type=TYPE           static|php|nodejs"
       echo "-p, --port=PORT           port of your app nodejs"
       echo "-ws, --web-socket         active web socket"
-      exit 0
+      exit
       ;;
 
     -t|--type)
@@ -76,46 +236,8 @@ if test -z "$type" -a -z "$name"; then
   exit 1
 else
   if test "$type" = "static"; then
-    echo "server {
-
-  listen 80;
-  server_name $name;
-
-  # Les urls commençant par / (toutes les urls)
-  location / {
-      root /home/prod/$name/www;
-      index index.html index.htm;
-      try_files \$uri \$uri/ \$uri.html =404;
-  }
-
-  # Les urls contennant /. (dotfiles)
-  location ~ /\. {
-      deny all;
-      access_log off;
-      log_not_found off;
-  }
-
-  # On va placer les logs dans un dossier accessible
-  error_log /home/prod/$name/logs/error.log;
-  access_log /home/prod/$name/logs/acess.log;
-
-  # Les pages d'erreurs
-  error_page 404 500 501 /error.html;
-
-}
-
-server {
-  # On redirige les www. vers la version sans www
-  listen 80;
-  server_name www.$name;
-  return 301 http://$name\$request_uri;
-}" > "$rootFolder"/"$name".conf
-
-    cmd "$(sudo mkdir /home/prod/"$name"/www)"
-    cmd "$(sudo mkdir /home/prod/"$name"/logs)"
-
-    cmd "$(sudo nginx -t)"
-    cmd "$(sudo service nginx restart)"
+    staticConf "$name"
+    setupServerCmd "$name"
     exit 1
 
   elif test "$type" = "nodejs"; then
@@ -124,59 +246,19 @@ server {
       exit 1
 
     elif test -z "$webSocket"; then
-      echo "upstream $name {
-  server localhost:$port;
-}
-
-server {
-
-  listen 80;
-  listen [::]:80;
-  server_name $name;
-
-  location / {
-      proxy_pass http://$name;
-  }
-}" > "$rootFolder"/"$name".conf
-
-      cmd "$(pm2 start /home/prod/"$name"/serverjs)"
-      cmd "$(sudo nginx -t)"
-      cmd "$(sudo service nginx restart)"
+      nodejsVanillaConf "$name" "$port"
+      setupServerCmd "$name"
       exit 1
 
     else
-      echo "upstream $name {
-    server localhost:$port;
-}
-
-server {
-
-    listen 80;
-    listen [::]:80;
-    server_name $name;
-
-    location / {
-        proxy_pass http://$name;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection \"upgrade\";
-    }
-}" > "$rootFolder"/"$name".conf
-
-      cmd "$(sudo mkdir /home/prod/"$name")"
-      cmd "$(pm2 start /home/prod/"$name"/server.js)"
-      cmd "$(sudo nginx -t)"
-      cmd "$(sudo service nginx restart)"
+      nodejsWSConf "$name" "$port"
+      setupServerCmd "$name"
       exit 1
     fi
 
     elif test "$type" = "php"; then
-      echo "" > "$rootFolder"/"$name".conf
-
-      md "$(sudo mkdir /home/prod/"$name")"
-      cmd "$(pm2 start /home/prod/"$name"/server.js)"
-      cmd "$(sudo nginx -t)"
-      cmd "$(sudo service nginx restart)"
+      phpVanillaConf "$name"
+      setupServerCmd "$name"
       exit 1
   fi
 fi
