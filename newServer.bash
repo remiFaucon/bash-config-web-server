@@ -85,7 +85,7 @@ server {
     location ~* \.(html|css|js|png|jpg|jpeg|gif|ico|svg|eot|woff|ttf)$ {
         expires max;
     }
-    
+
     location / {
         root /home/$1/prod/www;
         index index.html index.htm;
@@ -97,7 +97,7 @@ server {
         access_log off;
         log_not_found off;
     }
-    
+
     error_page 404 500 501 /error.html;
 
     #### SSL
@@ -416,8 +416,8 @@ server {
     server_name www.$name;
     return 301 http://$name\$request_uri;
 }" > "$rootFolder"/"$name".conf
-  
-  else 
+
+  else
     echo "# Redirection http vers https
 server {
     listen 80;
@@ -450,7 +450,7 @@ server {
     location ~* \.(html|css|js|png|jpg|jpeg|gif|ico|svg|eot|woff|ttf)$ {
         expires max;
     }
-    
+
     location / {
         root /home/prod/$name/www;
         index index.html index.htm;
