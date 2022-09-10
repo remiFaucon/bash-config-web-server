@@ -1,3 +1,5 @@
+#!/bin/bash
+
 sudo apt update
 
 sudo apt install curl gnupg2 ca-certificates lsb-release ubuntu-keyring git snapd proftpd quota fail2ban php8.0-fpm -y

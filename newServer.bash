@@ -4,10 +4,11 @@ secure=false
 rootFolder=~/../../etc/nginx/conf.d/
 
 function setupServerCmd() {
-  useradd -m -p "$(openssl passwd -crypt "$2")" "$1"
-  sudo quotacheck -cum /
-  sudo quotaon /
-  sudo setquota "$1" 15G 15G 0 0 /dev/sda1
+  useradd -m -p "$(mkpasswd -m sha-512 "$2")" "$1"
+  usermod -m -d /home/"$1"/ "$1"
+  sudo quotacheck -cumf /
+  sudo quotaon -f /
+  sudo setquota "$1" 15G 15G 0 0 /dev/sda2
   sudo mkdir /home/"$1"/prod
   sudo mkdir /home/"$1"/prod/www
   sudo mkdir /home/"$1"/prod/logs
