@@ -8,7 +8,7 @@ function setupServerCmd() {
   usermod -m -d /home/"$1"/ "$1"
   sudo quotacheck -cumf /
   sudo quotaon -f /
-  sudo setquota "$1" 15G 15G 0 0 /dev/sda2
+  sudo setquota "$1" 15G 15G 0 0 /dev/mapper/ubuntu--vg-ubuntu--lv
   sudo mkdir /home/"$1"/prod
   sudo mkdir /home/"$1"/prod/www
   sudo mkdir /home/"$1"/prod/logs
