@@ -1,9 +1,7 @@
 #!/bin/bash
 
 secure=false
-rootFolder="conf.d"
-
-
+rootFolder=~/../../etc/nginx/conf.d/
 
 function setupServerCmd() {
   useradd -m -p "$(openssl passwd -crypt "$2")" "$1"
@@ -13,15 +11,17 @@ function setupServerCmd() {
   sudo mkdir /home/"$1"/prod
   sudo mkdir /home/"$1"/prod/www
   sudo mkdir /home/"$1"/prod/logs
-  if test -z "$secure"; then
-      sudo /opt/letsencrypt/letsencrypt-auto certonly --agree-tos --rsa-key-size 4096 --webroot --webroot-path /home/"$1" -d "$1"
+  sudo touch /home/
+  if test "$3" = true; then
+#    sudo /opt/letsencrypt/letsencrypt-auto certonly --agree-tos --rsa-key-size 4096 --webroot --webroot-path /home/"$1" -d "$1"
+    sudo certbot certonly --nginx --domains "$1"
   fi
   sudo service nginx restart
   sudo service proftpd restart
 }
 
 function staticConf() {
-  if test -z "$secure"; then
+  if test "$2" = false; then
     echo "server {
 
     listen 80;
@@ -53,8 +53,7 @@ server {
 }" > "$rootFolder"/"$1".conf
 
   else
-    echo "# Redirection http vers https
-server {
+    echo "server {
     listen 80;
     listen [::]:80;
     server_name $1;
@@ -66,13 +65,10 @@ server {
     }
 }
 
-# Notre bloc serveur
 server {
 
-    listen 443 http3 reuseport;
-    listen [::]:443 http3 reuseport;
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
 
     server_name $1;
     root /home/$1/prod/www;
@@ -80,8 +76,6 @@ server {
     error_log /home/$1/prod/logs/error.log;
     access_log /home/$1/prod/logs/access.log;
 
-    ####    Locations
-    # On cache les fichiers statiques
     location ~* \.(html|css|js|png|jpg|jpeg|gif|ico|svg|eot|woff|ttf)$ {
         expires max;
     }
@@ -135,7 +129,7 @@ server {
 }
 
 function nodejsVanillaConf() {
-  if test -z "$secure"; then
+  if test "$3" = false; then
     echo "upstream $1 {
     server localhost:$2;
 }
@@ -174,7 +168,6 @@ server {
     server localhost:$2;
 }
 
-# Redirection http vers https
 server {
     listen 80;
     listen [::]:80;
@@ -187,21 +180,16 @@ server {
     }
 }
 
-# Notre bloc serveur
 server {
 
-    listen 443 http3 reuseport;
-    listen [::]:443 http3 reuseport;
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
 
     server_name $1;
     root /home/$1/prod/www;
     error_log /home/$1/prod/logs/error.log;
     access_log /home/$1/prod/logs/access.log;
 
-    ####    Locations
-    # On cache les fichiers statiques
     location ~* \.(html|css|js|png|jpg|jpeg|gif|ico|svg|eot|woff|ttf)$ {
         expires max;
     }
@@ -252,7 +240,7 @@ server {
 }
 
 function nodejsWSConf() {
-  if test -z "$secure"; then
+  if test "$3" = false; then
 
     echo "upstream $1 {
     server localhost:$2;
@@ -295,7 +283,6 @@ server {
     server localhost:$2;
 }
 
-# Redirection http vers https
 server {
     listen 80;
     listen [::]:80;
@@ -308,21 +295,16 @@ server {
     }
 }
 
-# Notre bloc serveur
 server {
 
-    listen 443 http3 reuseport;
-    listen [::]:443 http3 reuseport;
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
 
     server_name $1;
     root /home/$1/prod/www;
     error_log /home/$1/prod/logs/error.log;
     access_log /home/$1/prod/logs/access.log;
 
-    ####    Locations
-    # On cache les fichiers statiques
     location ~* \.(html|css|js|png|jpg|jpeg|gif|ico|svg|eot|woff|ttf)$ {
         expires max;
     }
@@ -376,17 +358,20 @@ fi
 }
 
 function phpVanillaConf() {
-  if test -z "$secure"; then
+  if test "$2" = false; then
     echo "server {
 
     listen 80;
-    server_name $name;
 
+    server_name $1;
+    root /home/$1/prod/www;
     index index.php index.html index.htm;
+    error_log /home/$1/prod/logs/error.log;
+    access_log /home/$1/prod/logs/access.log;
 
     location / {
-        root /home/prod/$name/www;
-        index index.html index.htm;
+        root /home/$name/prod/www;
+        index index.php index.html index.htm;
         try_files \$uri \$uri/ \$uri.html =404;
     }
 
@@ -398,14 +383,15 @@ function phpVanillaConf() {
 
     location ~ \.php$ {
         try_files \$uri =404;
-        fastcgi_pass unix:/var/run/php8-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php-fpm.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         include fastcgi_params;
+        limit_req zone=one burst=5;
     }
 
-    error_log /home/prod/$name/logs/error.log;
-    access_log /home/prod/$name/logs/access.log;
+    error_log /home/$name/prod/logs/error.log;
+    access_log /home/$name/prod/logs/access.log;
 
     error_page 404 500 501 /error.html;
 
@@ -418,8 +404,7 @@ server {
 }" > "$rootFolder"/"$name".conf
 
   else
-    echo "# Redirection http vers https
-server {
+    echo "server {
     listen 80;
     listen [::]:80;
     server_name $1;
@@ -431,13 +416,10 @@ server {
     }
 }
 
-# Notre bloc serveur
 server {
 
-    listen 443 http3 reuseport;
-    listen [::]:443 http3 reuseport;
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
 
     server_name $1;
     root /home/$1/prod/www;
@@ -445,15 +427,13 @@ server {
     error_log /home/$1/prod/logs/error.log;
     access_log /home/$1/prod/logs/access.log;
 
-    ####    Locations
-    # On cache les fichiers statiques
     location ~* \.(html|css|js|png|jpg|jpeg|gif|ico|svg|eot|woff|ttf)$ {
         expires max;
     }
 
     location / {
-        root /home/prod/$name/www;
-        index index.html index.htm;
+        root /home/$name/prod/www;
+        index index.php index.html index.htm;
         try_files \$uri \$uri/ \$uri.html =404;
     }
 
@@ -465,10 +445,11 @@ server {
 
     location ~ \.php$ {
         try_files \$uri =404;
-        fastcgi_pass unix:/var/run/php8-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php-fpm.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         include fastcgi_params;
+        limit_req zone=one burst=5;
     }
 
 
@@ -592,8 +573,8 @@ if test -z "$type" -o -z "$name" -o -z "$password"; then
   exit 1
 else
   if test "$type" = "static"; then
-    staticConf "$name"
-    setupServerCmd "$name" "$password"
+    staticConf "$name" "$secure"
+    setupServerCmd "$name" "$password" "$secure"
     exit 1
 
   elif test "$type" = "nodejs"; then
@@ -602,19 +583,19 @@ else
       exit 1
 
     elif test -z "$webSocket"; then
-      nodejsVanillaConf "$name" "$port"
-      setupServerCmd "$name" "$password"
+      nodejsVanillaConf "$name" "$port" "$secure"
+      setupServerCmd "$name" "$password" "$secure"
       exit 1
 
     else
-      nodejsWSConf "$name" "$port"
-      setupServerCmd "$name" "$password"
+      nodejsWSConf "$name" "$port" "$secure"
+      setupServerCmd "$name" "$password" "$secure"
       exit 1
     fi
 
     elif test "$type" = "php"; then
-      phpVanillaConf "$name"
-      setupServerCmd "$name" "$password"
+      phpVanillaConf "$name" "$secure"
+      setupServerCmd "$name" "$password" "$secure"
       exit 1
   fi
 fi
