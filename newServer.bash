@@ -34,7 +34,9 @@ function setupServerCmd() {
   sudo chmod 754 /home/"$1"/
   sudo mkdir /home/"$1"/bin/
   sudo cp -v /bin/bash /home/"$1"/bin/
+  sudo chown "$1" /home/"$1"/bin/bash
   sudo cp -v /bin/sh /home/"$1"/bin/
+  sudo chown "$1" /home/"$1"/bin/sh
   sudo mkdir /home/"$1"/lib/
   sudo mkdir /home/"$1"/lib/x86_64-linux-gnu/
   sudo mkdir /home/"$1"/lib64/
