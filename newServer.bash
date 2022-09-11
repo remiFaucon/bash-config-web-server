@@ -13,6 +13,8 @@ function setupServerCmd() {
   sudo mkdir /home/"$1"/prod/www
   sudo mkdir /home/"$1"/prod/logs
   sudo touch /home/
+  sudo chown -R "$1" /home/"$1"/prod
+  sudo chmod 777 /home/"$1"/
   if test "$3" = true; then
 #    sudo /opt/letsencrypt/letsencrypt-auto certonly --agree-tos --rsa-key-size 4096 --webroot --webroot-path /home/"$1" -d "$1"
     sudo certbot certonly --nginx --domains "$1"
