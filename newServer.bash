@@ -11,6 +11,8 @@ function setupServerCmd() {
   sudo touch /home/
   sudo mkdir /home/"$1"/bin/
   sudo cp -v /bin/sh /home/"$1"/bin/
+  sudo chmod +x /home/"$1"/bin/sh
+
 
   sudo useradd -m -s /home/"$1"/bin/sh -g ssh -p "$(mkpasswd -m sha-512 "$2")" "$1"
   sudo usermod -m -d /home/"$1"/ "$1"
@@ -39,7 +41,6 @@ function setupServerCmd() {
 #  sudo cp -v /bin/bash /home/"$1"/bin/
 #  sudo chown -R "$1" /home/"$1"/bin/bash
 #  sudo cp -v /bin/sh /home/"$1"/bin/
-#  sudo chmod  /home/"$1"/bin/sh
   sudo mkdir /home/"$1"/lib/
   sudo mkdir /home/"$1"/lib/x86_64-linux-gnu/
   sudo mkdir /home/"$1"/lib64/
