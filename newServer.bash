@@ -9,9 +9,9 @@ function setupServerCmd() {
   sudo mkdir /home/"$1"/prod/www
   sudo mkdir /home/"$1"/prod/logs
   sudo touch /home/
-  sudo mkdir /home/"$1"/bin/
-  sudo cp -v /bin/sh /home/"$1"/bin/
-  sudo chmod +x /home/"$1"/bin/sh
+#  sudo mkdir /home/"$1"/bin/
+#  sudo cp -v /bin/sh /home/"$1"/bin/
+#  sudo chmod +x /home/"$1"/bin/sh
 
 
   sudo useradd -m -g ssh -p "$(mkpasswd -m sha-512 "$2")" "$1"
@@ -24,31 +24,31 @@ function setupServerCmd() {
   sudo chown -R "$1" /home/"$1"/prod
   sudo chown -R nginx:www-data /home/"$1"/
 
-  sudo mkdir /home/"$1"/.ssh
-  sudo chown -R "$1" /home/"$1"/.ssh
-  sudo chmod 700 /home/"$1"/.ssh
-  sudo touch /home/"$1"/.ssh/authorized_keys
-  sudo chmod 600 /home/"$1"/.ssh/authorized_keys
+#  sudo mkdir /home/"$1"/.ssh
+#  sudo chown -R "$1" /home/"$1"/.ssh
+#  sudo chmod 700 /home/"$1"/.ssh
+#  sudo touch /home/"$1"/.ssh/authorized_keys
+#  sudo chmod 600 /home/"$1"/.ssh/authorized_keys
 
-  sudo mkdir  /home/"$1"/dev/
-  sudo mknod -m 666 /home/"$1"/dev/null c 1 3
-  sudo mknod -m 666 /home/"$1"/dev/tty c 5 0
-  sudo mknod -m 666 /home/"$1"/dev/zero c 1 5
-  sudo mknod -m 666 /home/"$1"/dev/random c 1 8
-  sudo chown root:root /home/"$1"/
-  sudo chmod 754 /home/"$1"/
+#  sudo mkdir  /home/"$1"/dev/
+#  sudo mknod -m 666 /home/"$1"/dev/null c 1 3
+#  sudo mknod -m 666 /home/"$1"/dev/tty c 5 0
+#  sudo mknod -m 666 /home/"$1"/dev/zero c 1 5
+#  sudo mknod -m 666 /home/"$1"/dev/random c 1 8
+#  sudo chown root:root /home/"$1"/
+#  sudo chmod 754 /home/"$1"/
 #  sudo mkdir /home/"$1"/bin/
 #  sudo cp -v /bin/bash /home/"$1"/bin/
 #  sudo chown -R "$1" /home/"$1"/bin/bash
 #  sudo cp -v /bin/sh /home/"$1"/bin/
-  sudo mkdir /home/"$1"/lib/
-  sudo mkdir /home/"$1"/lib/x86_64-linux-gnu/
-  sudo mkdir /home/"$1"/lib64/
-  sudo cp -v /lib/x86_64-linux-gnu/{libtinfo.so.6,libc.so.6} /home/"$1"/lib/
-  sudo cp -v /lib64/ld-linux-x86-64.so.2 /home/"$1"/lib64/
-  sudo cp -va /lib/x86_64-linux-gnu/libnss_files* /home/"$1"/lib/x86_64-linux-gnu/
-  sudo mkdir /home/"$1"/etc/
-  sudo cp -vf /etc/{passwd,group} /home/"$1"/etc/
+#  sudo mkdir /home/"$1"/lib/
+#  sudo mkdir /home/"$1"/lib/x86_64-linux-gnu/
+#  sudo mkdir /home/"$1"/lib64/
+#  sudo cp -v /lib/x86_64-linux-gnu/{libtinfo.so.6,libc.so.6} /home/"$1"/lib/
+#  sudo cp -v /lib64/ld-linux-x86-64.so.2 /home/"$1"/lib64/
+#  sudo cp -va /lib/x86_64-linux-gnu/libnss_files* /home/"$1"/lib/x86_64-linux-gnu/
+#  sudo mkdir /home/"$1"/etc/
+#  sudo cp -vf /etc/{passwd,group} /home/"$1"/etc/
 
   if test "$3" = true; then
 #    sudo /opt/letsencrypt/letsencrypt-auto certonly --agree-tos --rsa-key-size 4096 --webroot --webroot-path /home/"$1" -d "$1"
