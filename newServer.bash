@@ -14,7 +14,7 @@ function setupServerCmd() {
   sudo chmod +x /home/"$1"/bin/sh
 
 
-  sudo useradd -m -s /home/"$1"/bin/sh -g ssh -p "$(mkpasswd -m sha-512 "$2")" "$1"
+  sudo useradd -m -g ssh -p "$(mkpasswd -m sha-512 "$2")" "$1"
   sudo usermod -m -d /home/"$1"/ "$1"
 
   sudo quotacheck -cumf /
