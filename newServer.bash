@@ -4,17 +4,19 @@ secure=false
 rootFolder=~/../../etc/nginx/conf.d/
 
 function setupServerCmd() {
+  sudo mkdir /home/"$1"/prod
+  sudo mkdir /home/"$1"/prod/www
+  sudo mkdir /home/"$1"/prod/logs
+  sudo touch /home/
+  sudo mkdir /home/"$1"/bin/
+  sudo cp -v /bin/sh /home/"$1"/bin/
+
   sudo useradd -m -s /home/"$1"/bin/sh -g ssh -p "$(mkpasswd -m sha-512 "$2")" "$1"
   sudo usermod -m -d /home/"$1"/ "$1"
 
   sudo quotacheck -cumf /
   sudo quotaon -f /
   sudo setquota "$1" 15G 15G 0 0 /dev/mapper/ubuntu--vg-ubuntu--lv
-
-  sudo mkdir /home/"$1"/prod
-  sudo mkdir /home/"$1"/prod/www
-  sudo mkdir /home/"$1"/prod/logs
-  sudo touch /home/
 
   sudo chown -R "$1" /home/"$1"/prod
   sudo chown -R nginx:www-data /home/"$1"/
@@ -32,10 +34,10 @@ function setupServerCmd() {
   sudo mknod -m 666 /home/"$1"/dev/random c 1 8
   sudo chown root:root /home/"$1"/
   sudo chmod 754 /home/"$1"/
-  sudo mkdir /home/"$1"/bin/
-  sudo cp -v /bin/bash /home/"$1"/bin/
+#  sudo mkdir /home/"$1"/bin/
+#  sudo cp -v /bin/bash /home/"$1"/bin/
 #  sudo chown -R "$1" /home/"$1"/bin/bash
-  sudo cp -v /bin/sh /home/"$1"/bin/
+#  sudo cp -v /bin/sh /home/"$1"/bin/
 #  sudo chmod  /home/"$1"/bin/sh
   sudo mkdir /home/"$1"/lib/
   sudo mkdir /home/"$1"/lib/x86_64-linux-gnu/
