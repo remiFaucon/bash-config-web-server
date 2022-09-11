@@ -4,6 +4,7 @@ secure=false
 rootFolder=~/../../etc/nginx/conf.d/
 
 function setupServerCmd() {
+  sudo mkdir /home/"$1"
   sudo mkdir /home/"$1"/prod
   sudo mkdir /home/"$1"/prod/www
   sudo mkdir /home/"$1"/prod/logs
